@@ -12,17 +12,26 @@
 
 V1 版本聚焦两件事：
 
-1. **主流交易对行情快照**（Spot Tickers）
+1. **主流交易对行情快照**（Spot + USDT 永续）
    - 使用 Bitget 公共 ticker 接口，获取：
      - `BTCUSDT`
      - `ETHUSDT`
      - `BNBUSDT`
      - `SOLUSDT`
-   - 每个交易对输出：
-     - 最新价 `last`
-     - 24 小时涨跌 `change_24h`（百分比）
-     - 24 小时成交额 `volume_24h`
-     - 24 小时最高/最低价 `high_24h` / `low_24h`
+   - 每个交易对输出两部分：
+     - 现货（spot）：
+       - 最新价 `last`
+       - 24 小时涨跌 `change_24h`（百分比）
+       - 24 小时成交额 `volume_24h`
+       - 24 小时最高/最低价 `high_24h` / `low_24h`
+     - USDT 永续合约（perp）：
+       - 最新价 `last`
+       - 24 小时涨跌 `change_24h`
+       - 24 小时成交额（合约，USDT）`volume_24h`
+       - 24 小时最高/最低价 `high_24h` / `low_24h`
+       - 标记价 `mark_price`
+       - 资金费率 `funding_rate`
+       - 指数价 `index_price`
 
 2. **统一 JSON 输出**
 
@@ -32,14 +41,26 @@ V1 版本聚焦两件事：
 {
   "generated_at": 1234567890,
   "exchange": "Bitget",
-  "spot": [
+  "symbols": [
     {
       "symbol": "BTCUSDT",
-      "last": "67817.2",
-      "change_24h": "-1.03",
-      "volume_24h": "822410569.30",
-      "high_24h": "68583.28",
-      "low_24h": "67446.41"
+      "spot": {
+        "last": "67817.2",
+        "change_24h": "-1.03",
+        "volume_24h": "822410569.30",
+        "high_24h": "68583.28",
+        "low_24h": "67446.41"
+      },
+      "perp": {
+        "last": "67810.5",
+        "change_24h": "-1.01",
+        "volume_24h": "4848023554.77",
+        "high_24h": "68550.0",
+        "low_24h": "67000.0",
+        "mark_price": "67805.0",
+        "funding_rate": "0.000023",
+        "index_price": "67820.0"
+      }
     }
   ]
 }

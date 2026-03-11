@@ -29,14 +29,26 @@ license: MIT
 {
   "generated_at": 1234567890,
   "exchange": "Bitget",
-  "spot": [
+  "symbols": [
     {
       "symbol": "BTCUSDT",
-      "last": "67817.2",
-      "change_24h": "-1.03",
-      "volume_24h": "822410569.30",
-      "high_24h": "68583.28",
-      "low_24h": "67446.41"
+      "spot": {
+        "last": "67817.2",
+        "change_24h": "-1.03",
+        "volume_24h": "822410569.30",
+        "high_24h": "68583.28",
+        "low_24h": "67446.41"
+      },
+      "perp": {
+        "last": "67810.5",
+        "change_24h": "-1.01",
+        "volume_24h": "4848023554.77",
+        "high_24h": "68550.0",
+        "low_24h": "67000.0",
+        "mark_price": "67805.0",
+        "funding_rate": "0.000023",
+        "index_price": "67820.0"
+      }
     }
   ]
 }
@@ -46,13 +58,23 @@ license: MIT
 
 - `generated_at`：Unix 时间戳（秒），表示数据生成时间。
 - `exchange`：固定为 `Bitget`。
-- `spot`：数组，每个元素对应一个交易对：
+- `symbols`：数组，每个元素对应一个交易对：
   - `symbol`：交易对名称（如 `BTCUSDT`）。
-  - `last`：最新成交价。
-  - `change_24h`：24 小时涨跌幅（百分比字符串，如 `-1.03`）。
-  - `volume_24h`：24 小时成交额（以报价币计价）。
-  - `high_24h`：24 小时最高价。
-  - `low_24h`：24 小时最低价。
+  - `spot`：现货行情对象：
+    - `last`：最新成交价。
+    - `change_24h`：24 小时涨跌幅（百分比字符串，如 `-1.03`）。
+    - `volume_24h`：24 小时成交额（以报价币计价）。
+    - `high_24h`：24 小时最高价。
+    - `low_24h`：24 小时最低价。
+  - `perp`：USDT 永续合约行情对象：
+    - `last`：最新成交价。
+    - `change_24h`：24 小时涨跌幅。
+    - `volume_24h`：24 小时成交额（USDT 计）。
+    - `high_24h`：24 小时最高价。
+    - `low_24h`：24 小时最低价。
+    - `mark_price`：永续标记价。
+    - `funding_rate`：当前/上一周期资金费率。
+    - `index_price`：指数价，用作合理价格参考。
 
 ---
 
