@@ -35,67 +35,44 @@ SPOT_SYMBOLS = [
 ]
 
 
-def fetch_24h_ticker(symbol: str) -> dict:
-    """Fetch 24h ticker for a symbol from Bitget public API.
+def fetch_spot_tickers() -> dict:
+    """Fetch all spot tickers once, return dict[symbol] -> row.
 
-    Bitget v2 spot ticker endpoint 返回全部现货 ticker：
-    GET /api/v2/spot/market/tickers
-
-    这里先一次性拉全量，然后在本地按 symbol 过滤，避免单个 symbol
-    URL 404 之类的问题。
+    Bitget v2 spot ticker endpoint:
+        GET /api/v2/spot/market/tickers
     """
     url = f"{BASE_URL}/api/v2/spot/market/tickers"
-
-    try:
-        with urllib.request.urlopen(url, timeout=10) as resp:
-            data = resp.read().decode("utf-8", errors="ignore")
-        payload = json.loads(data)
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", errors="ignore") if e.fp else ""
-        err = f"HTTP {e.code}: {detail}"
-        print(f"[ERR] Failed to fetch tickers for {symbol}: {err}", file=sys.stderr)
-        return {"symbol": symbol, "error": err}
-    except Exception as e:  # noqa: BLE001
-        err = str(e)
-        print(f"[ERR] Failed to fetch tickers for {symbol}: {err}", file=sys.stderr)
-        return {"symbol": symbol, "error": err}
-
+    with urllib.request.urlopen(url, timeout=10) as resp:
+        data = resp.read().decode("utf-8", errors="ignore")
+    payload = json.loads(data)
     if payload.get("code") != "00000":
-        msg = payload.get("msg")
-        print(
-            f"[ERR] Bitget API error for {symbol}: code={payload.get('code')} msg={msg}",
-            file=sys.stderr,
-        )
-        return {"symbol": symbol, "error": f"api_error:{payload.get('code')}"}
+        raise RuntimeError(f"spot api_error:{payload.get('code')} {payload.get('msg')}")
+    result = {}
+    for d in payload.get("data") or []:
+        sym = d.get("symbol")
+        if sym:
+            result[sym] = d
+    return result
 
-    data_list = payload.get("data") or []
-    # Bitget v2 tickers 中字段含义：
-    # {
-    #   "symbol":"BTCUSDT",
-    #   "lastPr":"67817.2",
-    #   "high24h":"68583.28",
-    #   "low24h":"67446.41",
-    #   "quoteVolume":"822410569.30",
-    #   "change24h":"-1.03",
-    #   ...
-    # }
-    row = None
-    for d in data_list:
-        if d.get("symbol") == symbol:
-            row = d
-            break
 
-    if row is None:
-        return {"symbol": symbol, "error": "symbol_not_found"}
+def fetch_perp_tickers() -> dict:
+    """Fetch USDT-margined futures tickers once, return dict[symbol] -> row.
 
-    return {
-        "symbol": row.get("symbol", symbol),
-        "last": row.get("lastPr"),
-        "change_24h": row.get("change24h"),
-        "volume_24h": row.get("quoteVolume"),
-        "high_24h": row.get("high24h"),
-        "low_24h": row.get("low24h"),
-    }
+    Bitget v2 mix ticker endpoint:
+        GET /api/v2/mix/market/tickers?productType=USDT-FUTURES
+    """
+    url = f"{BASE_URL}/api/v2/mix/market/tickers?productType=USDT-FUTURES"
+    with urllib.request.urlopen(url, timeout=10) as resp:
+        data = resp.read().decode("utf-8", errors="ignore")
+    payload = json.loads(data)
+    if payload.get("code") != "00000":
+        raise RuntimeError(f"perp api_error:{payload.get('code')} {payload.get('msg')}")
+    result = {}
+    for d in payload.get("data") or []:
+        sym = d.get("symbol")
+        if sym:
+            result[sym] = d
+    return result
 
     if payload is None:
         print(f"[ERR] Failed to fetch {symbol}: {last_error}", file=sys.stderr)
@@ -141,14 +118,48 @@ def fetch_24h_ticker(symbol: str) -> dict:
 
 
 def main() -> None:
-    spot = []
+    # 拉一次现货 & 永续 tickers
+    spot_all = fetch_spot_tickers()
+    perp_all = fetch_perp_tickers()
+
+    symbols = []
     for sym in SPOT_SYMBOLS:
-        spot.append(fetch_24h_ticker(sym))
+        spot_row = spot_all.get(sym)
+        perp_row = perp_all.get(sym)
+
+        spot = None
+        if spot_row:
+            spot = {
+                "last": spot_row.get("lastPr"),
+                "change_24h": spot_row.get("change24h"),
+                "volume_24h": spot_row.get("quoteVolume"),
+                "high_24h": spot_row.get("high24h"),
+                "low_24h": spot_row.get("low24h"),
+            }
+
+        perp = None
+        if perp_row:
+            perp = {
+                "last": perp_row.get("lastPr"),
+                "change_24h": perp_row.get("change24h"),
+                "volume_24h": perp_row.get("usdtVolume"),
+                "high_24h": perp_row.get("high24h"),
+                "low_24h": perp_row.get("low24h"),
+                "mark_price": perp_row.get("markPrice"),
+                "funding_rate": perp_row.get("fundingRate"),
+                "index_price": perp_row.get("indexPrice"),
+            }
+
+        symbols.append({
+            "symbol": sym,
+            "spot": spot or {"error": "no_spot_data"},
+            "perp": perp or {"error": "no_perp_data"},
+        })
 
     result = {
         "generated_at": int(time.time()),
         "exchange": "Bitget",
-        "spot": spot,
+        "symbols": symbols,
     }
 
     json.dump(result, sys.stdout, ensure_ascii=False, indent=2)
