@@ -84,8 +84,16 @@ mkdir -p damo-bitget-market
 cd damo-bitget-market
 ```
 
-> 当前仓库尚未推送到 GitHub，后续你可以将本地目录初始化为 git 仓库并推送。
+> 当前仓库已推送到 GitHub：
+> https://github.com/damobianyuan0325/damo-bitget-market
 
+将仓库克隆到你的 workspace 即可。
+
+```bash
+cd ~/.openclaw/workspace
+git clone https://github.com/damobianyuan0325/damo-bitget-market.git
+cd damo-bitget-market
+```
 ### 2. 运行主脚本
 
 ```bash
