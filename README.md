@@ -120,7 +120,7 @@ python3 bitget_market.py > bitget_market_latest.json
 
    ```bash
    cd ~/.openclaw/workspace/damo-bitget-market
-   /usr/bin/python3 bitget_market.py > /Users/damo/.openclaw/workspace/bitget_market_latest.json
+   /usr/bin/python3 bitget_market.py > ~/.openclaw/workspace/bitget_market_latest.json
    ```
 
 2. 在 `rss_briefing.py` 或上层简报脚本中：
